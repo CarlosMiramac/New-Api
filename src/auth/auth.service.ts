@@ -16,18 +16,36 @@ export class AuthService {
   }
 
   async register(email: string, password: string, fullname: string, mobile_phone: string) {
+    // Encriptar la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
-
+  
+    // Registrar al usuario en Supabase y retornar los datos insertados
     const { data, error } = await this.supabase
       .from('users')
-      .insert([{ email, password: hashedPassword, fullname, mobile_phone }]);
-
+      .insert([
+        {
+          email,
+          password: hashedPassword,
+          fullname,
+          mobile_phone,
+        },
+      ])
+      .select(); // Seleccionar los datos insertados para asegurarse de que se devuelvan correctamente
+  
+    // Verificar si hubo algún error
     if (error) {
-      throw new Error(error.message);
+      throw new Error(`Error registering user: ${error.message}`);
     }
-
-    return { message: 'User registered successfully' };
+  
+    // Asegurarse de que los datos del usuario sean devueltos correctamente
+    return {
+      message: 'User registered successfully',
+      user: data && data.length > 0 ? data[0] : null, // Asegurarse de que el usuario se devuelva
+    };
   }
+  
+  
+  
 
   async login(email: string, password: string) {
     const { data, error } = await this.supabase
